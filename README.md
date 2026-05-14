@@ -57,13 +57,13 @@ Herhangi bir kurulum gerekmez. Dosyayı indirip tarayıcıda aç:
 ```bash
 git clone https://github.com/kurtayfun/arkanoid.git
 cd arkanoid
-# arkanoid.html dosyasını tarayıcıda aç
+# index.html dosyasını tarayıcıda aç
 ```
 
 Ya da direkt olarak GitHub Pages üzerinden oyna:
 
 ```
-https://kurtayfun.github.io/arkanoid/arkanoid.html
+https://kurtayfun.github.io/Arkanoid/
 ```
 
 ---
