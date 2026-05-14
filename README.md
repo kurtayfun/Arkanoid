@@ -55,7 +55,7 @@ Hiçbir harici kütüphane veya framework kullanılmamıştır.
 Herhangi bir kurulum gerekmez. Dosyayı indirip tarayıcıda aç:
 
 ```bash
-git clone https://github.com/KULLANICIADIN/arkanoid.git
+git clone https://github.com/kurtayfun/arkanoid.git
 cd arkanoid
 # arkanoid.html dosyasını tarayıcıda aç
 ```
@@ -63,7 +63,7 @@ cd arkanoid
 Ya da direkt olarak GitHub Pages üzerinden oyna:
 
 ```
-https://KULLANICIADIN.github.io/arkanoid/arkanoid.html
+https://kurtayfun.github.io/arkanoid/arkanoid.html
 ```
 
 ---
