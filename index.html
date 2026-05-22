@@ -217,13 +217,13 @@ function initState() {
 }
 
 function spawnBall(fromBall) {
-  const speed = Math.min(5 + state.round * 0.3, 8) * (W / 420);
-  const angle = fromBall ? (Math.random() * 60 - 30) * Math.PI/180 : 0;
+  const speed = Math.min(3 + state.round * 0.3, 6) * (W / 420);
+  const angle = fromBall ? (Math.random() * 60 - 30) * Math.PI/180 : -Math.PI/2 + (Math.random()*0.4-0.2);
   state.balls.push({
     x: fromBall ? fromBall.x : state.paddle.x,
     y: fromBall ? fromBall.y : state.paddle.y - 12,
-    vx: fromBall ? Math.sin(angle) * speed : 0,
-    vy: -speed,
+    vx: Math.sin(angle) * speed,
+    vy: -Math.abs(Math.cos(angle) * speed),
     r: Math.max(6, Math.floor(W * 0.016)),
     launched: !!fromBall,
   });
@@ -567,14 +567,7 @@ function movePaddle(x) {
 }
 
 function launchBall() {
-  state.balls.forEach(b => {
-    if (!b.launched) {
-      const speed = Math.sqrt(b.vx**2 + b.vy**2) || Math.min(5 + state.round * 0.3, 8) * (W / 420);
-      b.vx = 0;
-      b.vy = -speed;
-      b.launched = true;
-    }
-  });
+  state.balls.forEach(b => b.launched = true);
 }
 
 // --- OYUN BAŞLAT / BİTİR ---
