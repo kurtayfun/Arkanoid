@@ -161,36 +161,129 @@
     cursor: pointer;
     border-radius: 3px;
   }
-  .seg-btn.active { background: #ff6600; border-color: #ff6600; color: #fff; }
-  .toggle-btn {
-    background: #1a1a3a;
-    border: 1px solid #334;
-    color: #556;
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a1a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
     font-family: 'Courier New', monospace;
-    font-size: 0.8em;
-    padding: 4px 10px;
-    cursor: pointer;
-    border-radius: 3px;
+    overflow: hidden;
+    touch-action: none;
   }
-  .toggle-btn.active { background: #44bb44; border-color: #44bb44; color: #fff; }
-  .credit-box { color: #aaa; font-size: 0.82em; line-height: 1.8; margin-top: 6px; }
-  .credit-box strong { color: #ff6600; font-size: 1.1em; }
-  #lives-icons { display: flex; gap: 4px; align-items: center; }
-  .heart { color: #ff3366; font-size: 15px; }
+
+  #ui {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 420px;
+    padding: 8px 12px;
+    color: #ff6600;
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+
+  #ui span { color: #ffffff; font-size: 15px; font-weight: bold; }
+
+  #canvas-wrapper {
+    position: relative;
+    border: 3px solid #334;
+    box-shadow: 0 0 30px #0055ff55, inset 0 0 20px #00001188;
+  }
+
+  canvas {
+    display: block;
+    background: #0d0d2b;
+  }
+
+  /* DÜZENLENEN KISIM: Yardım menüsü kapsayıcısı */
+  #overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* İçeriğin yukarıdan başlaması sağlandı */
+    background: rgba(5, 5, 20, 0.95); /* Arka plan arkadaki ögeleri kapatması için biraz daha koyulaştırıldı */
+    color: white;
+    text-align: center;
+    padding: 40px 20px 20px 20px; /* Üst boşluk başlığın taşmaması için artırıldı */
+    overflow-y: auto; /* İçerik ekrandan büyükse kendi içinde kaydırılabilir yapıldı */
+    z-index: 20; /* Skor tablosunun (UI) arkasında kalmaması için katman önceliği artırıldı */
+  }
+
+  #overlay h1 {
+    font-size: 2.2em;
+    color: #ff6600;
+    text-shadow: 0 0 20px #ff6600;
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+    flex-shrink: 0; /* Başlığın daralarak bozulması engellendi */
+  }
+
+  #overlay p {
+    color: #aaa;
+    margin-bottom: 6px;
+    font-size: 0.85em;
+  }
+
+  #overlay .subtitle {
+    color: #4488ff;
+    font-size: 0.9em;
+    margin-bottom: 24px;
+  }
+
+  #startBtn {
+    background: linear-gradient(135deg, #ff6600, #cc3300);
+    border: none;
+    color: white;
+    font-family: 'Courier New', monospace;
+    font-size: 1.1em;
+    letter-spacing: 2px;
+    padding: 14px 36px;
+    cursor: pointer;
+    border-radius: 4px;
+    box-shadow: 0 0 20px #ff660066;
+    transition: transform 0.1s, box-shadow 0.1s;
+    margin-bottom: 20px; /* Butonun altındaki boşluk netleştirildi */
+    flex-shrink: 0;
+  }
+
+  #startBtn:active { transform: scale(0.96); }
+
+  #lives-icons {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .heart { color: #ff3366; font-size: 16px; }
+
   #powerup-bar {
     width: 100%;
     max-width: 420px;
-    height: 24px;
+    height: 28px;
     display: flex;
     align-items: center;
-    padding: 0 10px;
-    gap: 6px;
-    font-size: 10px;
-    color: #445;
+    padding: 0 12px;
+    gap: 8px;
+    font-size: 11px;
+    color: #556;
     letter-spacing: 1px;
   }
-  #active-power { color: #ffcc00; font-weight: bold; font-size: 11px; }
+
+  #active-power {
+    color: #ffcc00;
+    font-weight: bold;
+    font-size: 12px;
+  }
 </style>
+
 </head>
 <body>
 
