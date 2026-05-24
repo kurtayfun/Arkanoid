@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Arkanoid</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a1a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+    touch-action: none;
+  }
+  #ui {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 420px;
+    padding: 6px 10px;
+    color: #ff6600;
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+  #ui span { color: #fff; font-size: 14px; font-weight: bold; }
+  #pause-btn {
+    background: #1a1a3a;
+    border: 1px solid #334;
+    color: #ff6600;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+  }
+  #pause-btn:active { opacity: 0.7; }
+  #canvas-wrapper {
+    position: relative;
+    border: 3px solid #334;
+    box-shadow: 0 0 30px #0055ff55, inset 0 0 20px #00001188;
+  }
+  canvas { display: block; background: #0d0d2b; }
+
+  #overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,20,0.92);
+    color: white;
+    text-align: center;
+    padding: 16px;
+    overflow-y: auto;
+  }
+  #overlay h1 {
+    font-size: 2em;
+    color: #ff6600;
+    text-shadow: 0 0 20px #ff6600;
+    letter-spacing: 4px;
+    margin-bottom: 6px;
+  }
+  #overlay h2 {
+    font-size: 1.1em;
+    color: #4488ff;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+  .overlay-nav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .nav-btn {
+    background: #1a1a3a;
+    border: 1px solid #334;
+    color: #aaa;
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .nav-btn:active { transform: scale(0.92); }
+  .nav-btn:hover { border-color: #ff6600; color: #ff6600; }
+  .big-btn {
+    background: linear-gradient(135deg, #ff6600, #cc3300);
+    border: none;
+    color: white;
+    font-family: 'Courier New', monospace;
+    font-size: 1em;
+    letter-spacing: 2px;
+    padding: 12px 32px;
+    cursor: pointer;
+    border-radius: 4px;
+    box-shadow: 0 0 20px #ff660066;
+    margin-top: 8px;
+  }
+  .big-btn:active { transform: scale(0.96); }
+  .back-btn {
+    background: #1a1a3a;
+    border: 1px solid #334;
+    color: #aaa;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85em;
+    padding: 7px 18px;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-top: 10px;
+  }
+  .sub-page { display: none; flex-direction: column; align-items: center; width: 100%; }
+  .sub-page.active { display: flex; }
+  .power-list { text-align: left; width: 100%; max-width: 300px; margin: 8px 0; }
+  .power-list li {
+    color: #ccc;
+    font-size: 0.78em;
+    padding: 4px 0;
+    border-bottom: 1px solid #1a1a3a;
+    list-style: none;
+  }
+  .power-list li span { color: #ffcc00; }
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 280px;
+    padding: 6px 0;
+    border-bottom: 1px solid #1a1a3a;
+    font-size: 0.85em;
+  }
+  .stat-row .label { color: #556; }
+  .stat-row .val { color: #ffcc00; font-weight: bold; }
+  .setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 280px;
+    padding: 8px 0;
+    border-bottom: 1px solid #1a1a3a;
+    font-size: 0.85em;
+    color: #aaa;
+  }
+  .setting-row .label { color: #aaa; }
+  .seg-ctrl { display: flex; gap: 4px; }
+  .seg-btn {
+    background: #1a1a3a;
+    border: 1px solid #334;
+    color: #556;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75em;
+    padding: 4px 8px;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  .seg-btn.active { background: #ff6600; border-color: #ff6600; color: #fff; }
+  .toggle-btn {
+    background: #1a1a3a;
+    border: 1px solid #334;
+    color: #556;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8em;
+    padding: 4px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  .toggle-btn.active { background: #44bb44; border-color: #44bb44; color: #fff; }
+  .credit-box { color: #aaa; font-size: 0.82em; line-height: 1.8; margin-top: 6px; }
+  .credit-box strong { color: #ff6600; font-size: 1.1em; }
+  #lives-icons { display: flex; gap: 4px; align-items: center; }
+  .heart { color: #ff3366; font-size: 15px; }
+  #powerup-bar {
+    width: 100%;
+    max-width: 420px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    gap: 6px;
+    font-size: 10px;
+    color: #445;
+    letter-spacing: 1px;
+  }
+  #active-power { color: #ffcc00; font-weight: bold; font-size: 11px; }
+</style>
+</head>
+<body>
+
+<div id="ui">
+  <div>SKOR: <span id="scoreDisplay">0</span></div>
+  <div>ROUND: <span id="roundDisplay">1</span></div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div id="lives-icons"></div>
+    <button id="pause-btn" onclick="togglePause()" style="display:none">⏸</button>
+  </div>
+</div>
+
+<div id="canvas-wrapper">
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="overlay">
+    <!-- ANA SAYFA -->
+    <div id="page-main" class="sub-page active">
+      <h1>ARKANOID</h1>
+      <p style="color:#4488ff;font-size:0.85em;margin-bottom:14px">Mobil & Masaüstü</p>
+      <div class="overlay-nav">
+        <button class="nav-btn" onclick="showPage('page-help')" title="Nasıl Oynanır">❓</button>
+        <button class="nav-btn" onclick="showPage('page-settings')" title="Ayarlar">⚙️</button>
+        <button class="nav-btn" onclick="showPage('page-stats')" title="İstatistikler">📊</button>
+        <button class="nav-btn" onclick="showPage('page-credits')" title="Hakkında">👤</button>
+      </div>
+      <button class="big-btn" onclick="startGame()">BAŞLA ▶</button>
+    </div>
+
+    <!-- HAKKINDA / NASIL OYNANIR -->
+    <div id="page-help" class="sub-page">
+      <h2>❓ NASIL OYNANIR</h2>
+      <ul class="power-list">
+        <li>🖱️ <span>Mouse / Parmak</span> ile paddle'ı hareket ettir</li>
+        <li>👆 <span>Tıkla / Dokun</span> topu fırlat</li>
+        <li>🧱 Tüm tuğlaları kır, sonraki raunda geç</li>
+        <li>💀 3 canın biter → Game Over</li>
+      </ul>
+      <h2 style="margin-top:10px">⚡ POWER-UP'LAR</h2>
+      <ul class="power-list">
+        <li>🔵 <span>GENİŞ PADDLE</span> — Paddle geçici genişler (10sn)</li>
+        <li>🔴 <span>LAZER</span> — Paddle'dan lazer ateşlenir (8sn)</li>
+        <li>🟡 <span>ÇOK TOP</span> — Top 3'e katlanır</li>
+        <li>🟢 <span>YAVAŞ TOP</span> — Top yavaşlar (7sn)</li>
+        <li>💗 <span>EKSTRA CAN</span> — Bir can kazanırsın</li>
+        <li>🟦 <span>BARİYER</span> — Alt çizgi, top düşmez (12sn)</li>
+        <li>🔥 <span>ATEŞ TOPU</span> — Tuğlalardan sekmiyor, deler (8sn)</li>
+        <li>🧲 <span>MIKNATIS</span> — Top paddle'a yapışır (8sn)</li>
+        <li>💣 <span>BOMBA</span> — 9 tuğlayı birden kırar</li>
+      </ul>
+      <button class="back-btn" onclick="showPage('page-main')">← GERİ</button>
+    </div>
+
+    <!-- AYARLAR -->
+    <div id="page-settings" class="sub-page">
+      <h2>⚙️ AYARLAR</h2>
+      <div class="setting-row">
+        <span class="label">Top Hızı</span>
+        <div class="seg-ctrl">
+          <button class="seg-btn" id="spd-easy" onclick="setSpeed('easy')">KOLAY</button>
+          <button class="seg-btn active" id="spd-mid" onclick="setSpeed('mid')">ORTA</button>
+          <button class="seg-btn" id="spd-hard" onclick="setSpeed('hard')">ZOR</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <span class="label">🎵 Müzik</span>
+        <button class="toggle-btn" id="music-toggle" onclick="toggleMusic()">KAPALI</button>
+      </div>
+      <div class="setting-row">
+        <span class="label">🔊 Ses Efektleri</span>
+        <button class="toggle-btn active" id="sfx-toggle" onclick="toggleSfx()">AÇIK</button>
+      </div>
+      <button class="back-btn" onclick="showPage('page-main')">← GERİ</button>
+    </div>
+
+    <!-- İSTATİSTİKLER -->
+    <div id="page-stats" class="sub-page">
+      <h2>📊 İSTATİSTİKLER</h2>
+      <div class="stat-row"><span class="label">En Yüksek Skor</span><span class="val" id="st-score">0</span></div>
+      <div class="stat-row"><span class="label">En Yüksek Round</span><span class="val" id="st-round">0</span></div>
+      <div class="stat-row"><span class="label">Toplam Oynama</span><span class="val" id="st-plays">0</span></div>
+      <div class="stat-row"><span class="label">Toplam Süre</span><span class="val" id="st-time">0 dk</span></div>
+      <div class="stat-row"><span class="label">Toplam Tuğla</span><span class="val" id="st-bricks">0</span></div>
+      <button class="back-btn" onclick="showPage('page-main')">← GERİ</button>
+    </div>
+
+    <!-- KREDİLER -->
+    <div id="page-credits" class="sub-page">
+      <h2>👤 KREDİLER</h2>
+      <div class="credit-box">
+        <p>Geliştirici</p>
+        <p><strong>Çınar Kurt</strong></p>
+        <br>
+        <p style="color:#445">Orijinal Arkanoid</p>
+        <p style="color:#445">© 1986 Taito Corporation</p>
+        <br>
+        <p style="color:#334;font-size:0.9em">Bu proje eğitim ve eğlence<br>amaçlı yapılmıştır.</p>
+      </div>
+      <button class="back-btn" onclick="showPage('page-main')">← GERİ</button>
+    </div>
+
+    <!-- DURAKLAT -->
+    <div id="page-pause" class="sub-page">
+      <h1>⏸ DURAKLATILDI</h1>
+      <p style="color:#556;margin:12px 0">Oyun durduruldu</p>
+      <div class="stat-row" style="max-width:200px"><span class="label">Skor</span><span class="val" id="pause-score">0</span></div>
+      <div class="stat-row" style="max-width:200px"><span class="label">Round</span><span class="val" id="pause-round">0</span></div>
+      <button class="big-btn" onclick="togglePause()">DEVAM ET ▶</button>
+    </div>
+
+    <!-- GAME OVER / WIN -->
+    <div id="page-end" class="sub-page">
+      <h1 id="end-title">GAME OVER</h1>
+      <p id="end-sub" class="subtitle" style="color:#4488ff;margin-bottom:10px"></p>
+      <div class="stat-row" style="max-width:240px"><span class="label">Skor</span><span class="val" id="end-score">0</span></div>
+      <div class="stat-row" style="max-width:240px"><span class="label">Round</span><span class="val" id="end-round">0</span></div>
+      <div class="stat-row" style="max-width:240px"><span class="label">En Yüksek Skor</span><span class="val" id="end-best">0</span></div>
+      <button class="big-btn" onclick="startGame()">TEKRAR OYNA ▶</button>
+      <button class="back-btn" onclick="goMainMenu()">ANA MENÜ</button>
+    </div>
+  </div>
+</div>
+
+<div id="powerup-bar">
+  GÜÇ: <span id="active-power">—</span>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const scoreDisplay = document.getElementById('scoreDisplay');
+const roundDisplay = document.getElementById('roundDisplay');
+const livesIcons = document.getElementById('lives-icons');
+const activePower = document.getElementById('active-power');
+const pauseBtn = document.getElementById('pause-btn');
+
+// ===================== AYARLAR =====================
+let settings = {
+  speed: 'mid',   // easy / mid / hard
+  music: false,
+  sfx: true,
+};
+function speedMultiplier() {
+  return settings.speed === 'easy' ? 0.7 : settings.speed === 'hard' ? 1.4 : 1.0;
+}
+function setSpeed(s) {
+  settings.speed = s;
+  ['easy','mid','hard'].forEach(k => {
+    document.getElementById('spd-'+k).classList.toggle('active', k === s);
+  });
+  saveSettings();
+}
+function toggleMusic() {
+  settings.music = !settings.music;
+  const btn = document.getElementById('music-toggle');
+  btn.classList.toggle('active', settings.music);
+  btn.textContent = settings.music ? 'AÇIK' : 'KAPALI';
+  if (settings.music) startMusic(); else stopMusic();
+  saveSettings();
+}
+function toggleSfx() {
+  settings.sfx = !settings.sfx;
+  const btn = document.getElementById('sfx-toggle');
+  btn.classList.toggle('active', settings.sfx);
+  btn.textContent = settings.sfx ? 'AÇIK' : 'KAPALI';
+  saveSettings();
+}
+function saveSettings() {
+  try { localStorage.setItem('ark_settings', JSON.stringify(settings)); } catch(e){}
+}
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem('ark_settings'));
+    if (s) {
+      settings = {...settings, ...s};
+      setSpeed(settings.speed);
+      if (settings.music) { document.getElementById('music-toggle').classList.add('active'); document.getElementById('music-toggle').textContent='AÇIK'; }
+      if (!settings.sfx) { document.getElementById('sfx-toggle').classList.remove('active'); document.getElementById('sfx-toggle').textContent='KAPALI'; }
+    }
+  } catch(e){}
+}
+
+// ===================== İSTATİSTİKLER =====================
+let stats = { bestScore:0, bestRound:0, plays:0, totalTime:0, totalBricks:0 };
+let sessionStart = 0;
+function loadStats() {
+  try { const s = JSON.parse(localStorage.getItem('ark_stats')); if(s) stats={...stats,...s}; } catch(e){}
+}
+function saveStats() {
+  try { localStorage.setItem('ark_stats', JSON.stringify(stats)); } catch(e){}
+}
+function updateStatsPage() {
+  document.getElementById('st-score').textContent = stats.bestScore;
+  document.getElementById('st-round').textContent = stats.bestRound;
+  document.getElementById('st-plays').textContent = stats.plays;
+  const mins = Math.floor(stats.totalTime / 60);
+  document.getElementById('st-time').textContent = mins < 60 ? mins+' dk' : Math.floor(mins/60)+'s '+mins%60+'dk';
+  document.getElementById('st-bricks').textContent = stats.totalBricks;
+}
+
+// ===================== OVERLAY YÖNETİMİ =====================
+function showPage(id) {
+  document.querySelectorAll('.sub-page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  overlay.style.display = 'flex';
+  if (id === 'page-stats') updateStatsPage();
+}
+function goMainMenu() {
+  gameRunning = false;
+  cancelAnimationFrame(animId);
+  stopMusic();
+  showPage('page-main');
+}
+
+// ===================== SES SİSTEMİ =====================
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function playSound(freq, type, duration, vol, freqEnd) {
+  if (!settings.sfx) return;
+  try {
+    const ac = getAudio();
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.type = type || 'square';
+    osc.frequency.setValueAtTime(freq, ac.currentTime);
+    if (freqEnd) osc.frequency.linearRampToValueAtTime(freqEnd, ac.currentTime + duration);
+    gain.gain.setValueAtTime(vol || 0.25, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + duration);
+    osc.start(ac.currentTime); osc.stop(ac.currentTime + duration);
+  } catch(e) {}
+}
+const SFX = {
+  wall:      () => playSound(200,'square',0.06,0.2),
+  paddle:    () => playSound(330,'square',0.08,0.25,440),
+  brick:     () => playSound(440,'square',0.07,0.2,300),
+  brickHard: () => playSound(180,'sawtooth',0.1,0.2,160),
+  powerup:   () => [523,659,784,1046].forEach((f,i)=>setTimeout(()=>playSound(f,'square',0.12,0.25),i*70)),
+  die:       () => [440,350,260,180].forEach((f,i)=>setTimeout(()=>playSound(f,'sawtooth',0.18,0.3),i*100)),
+  round:     () => [523,659,784,659,784,1046].forEach((f,i)=>setTimeout(()=>playSound(f,'square',0.15,0.2),i*80)),
+  gameover:  () => [330,277,220,165].forEach((f,i)=>setTimeout(()=>playSound(f,'sawtooth',0.25,0.35),i*150)),
+  laser:     () => playSound(880,'sawtooth',0.08,0.15,440),
+  barrier:   () => playSound(260,'square',0.1,0.2,320),
+  bomb:      () => [200,150,100].forEach((f,i)=>setTimeout(()=>playSound(f,'sawtooth',0.15,0.4),i*60)),
+  magnet:    () => playSound(440,'sine',0.2,0.2,880),
+  fire:      () => playSound(600,'sawtooth',0.06,0.15,200),
+};
+
+// ===================== 8-BİT MÜZİK =====================
+let musicNodes = [];
+let musicPlaying = false;
+const melody = [
+  262,294,330,349,392,440,494,523,
+  494,440,392,349,330,294,262,0,
+  330,392,440,392,330,294,262,294,
+  330,262,294,330,262,0,392,440
+];
+let melodyIdx = 0;
+let musicTimeout = null;
+function startMusic() {
+  if (musicPlaying) return;
+  musicPlaying = true;
+  playMelodyNote();
+}
+function playMelodyNote() {
+  if (!settings.music || !musicPlaying) return;
+  try {
+    const ac = getAudio();
+    const freq = melody[melodyIdx % melody.length];
+    melodyIdx++;
+    if (freq > 0) {
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.connect(gain); gain.connect(ac.destination);
+      osc.type = 'square';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.06, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.18);
+      osc.start(ac.currentTime); osc.stop(ac.currentTime + 0.2);
+    }
+  } catch(e){}
+  musicTimeout = setTimeout(playMelodyNote, 200);
+}
+function stopMusic() {
+  musicPlaying = false;
+  if (musicTimeout) clearTimeout(musicTimeout);
+}
+
+// ===================== BOYUT =====================
+function calcSize() {
+  const maxW = Math.min(window.innerWidth - 10, 420);
+  const maxH = Math.min(window.innerHeight - 120, 680);
+  const ratio = 420 / 620;
+  let w = maxW, h = w / ratio;
+  if (h > maxH) { h = maxH; w = h * ratio; }
+  return { w: Math.floor(w), h: Math.floor(h) };
+}
+let { w: W, h: H } = calcSize();
+canvas.width = W; canvas.height = H;
+document.getElementById('canvas-wrapper').style.width = W + 'px';
+
+// ===================== SABİTLER =====================
+const COLS = 11, ROWS = 6;
+const BRICK_ROWS_START = Math.floor(H * 0.05);
+const BRICK_H = Math.floor(H * 0.04);
+const BRICK_GAP = 3;
+const BRICK_W = Math.floor((W - (COLS+1)*BRICK_GAP) / COLS);
+
+const BRICK_COLORS = [
+  { color:'#cc2200', score:70, hp:2 },
+  { color:'#ff6600', score:50, hp:1 },
+  { color:'#ffcc00', score:40, hp:1 },
+  { color:'#44bb44', score:30, hp:1 },
+  { color:'#2266ff', score:20, hp:1 },
+  { color:'#aa44cc', score:60, hp:2 },
+];
+
+const POWERUP_TYPES = [
+  { type:'wide',    color:'#00ccff', icon:'W' },
+  { type:'laser',   color:'#ff3366', icon:'L' },
+  { type:'multi',   color:'#ffcc00', icon:'M' },
+  { type:'slow',    color:'#44ff88', icon:'S' },
+  { type:'life',    color:'#ff88cc', icon:'♥' },
+  { type:'barrier', color:'#4488ff', icon:'B' },
+  { type:'fire',    color:'#ff4400', icon:'F' },
+  { type:'magnet',  color:'#cc44ff', icon:'🧲' },
+  { type:'bomb',    color:'#884400', icon:'💣' },
+];
+
+const POWER_LABELS = {
+  wide:    '🔵 GENİŞ PADDLE',
+  laser:   '🔴 LAZER',
+  multi:   '🟡 ÇOK TOP',
+  slow:    '🟢 YAVAŞ TOP',
+  life:    '💗 EKSTRA CAN',
+  barrier: '🟦 BARİYER',
+  fire:    '🔥 ATEŞ TOPU',
+  magnet:  '🧲 MIKNATIS',
+  bomb:    '💣 BOMBA',
+};
+
+// ===================== OYUN STATE =====================
+let state = {};
+let animId, gameRunning = false, paused = false;
+let laserTimer = 0;
+let bricksDestroyed = 0;
+
+function initState() {
+  state = {
+    score: 0, round: 1, lives: 3,
+    balls: [],
+    paddle: { x: W/2, w: W*0.18, h: Math.floor(H*0.022), y: H - Math.floor(H*0.08) },
+    bricks: [], powerups: [], lasers: [],
+    activeEffects: {},
+    effectTimers: {},
+    barrier: false,
+    barrierTimer: null,
+  };
+  bricksDestroyed = 0;
+  spawnBall();
+  buildBricks();
+}
+
+function baseSpeed() {
+  return Math.min(5 + state.round * 0.3, 8) * (W / 420) * speedMultiplier();
+}
+
+function spawnBall(fromBall) {
+  const speed = baseSpeed();
+  const angle = fromBall ? (Math.random()*60-30)*Math.PI/180 : 0;
+  state.balls.push({
+    x: fromBall ? fromBall.x : state.paddle.x,
+    y: fromBall ? fromBall.y : state.paddle.y - 12,
+    vx: fromBall ? Math.sin(angle)*speed : 0,
+    vy: -speed,
+    r: Math.max(6, Math.floor(W*0.016)),
+    launched: !!fromBall,
+    fire: fromBall ? fromBall.fire : false,
+  });
+}
+
+function buildBricks() {
+  state.bricks = [];
+  const patterns = [
+    [4,2,3,1,0,5],[5,0,1,3,2,4],[0,5,2,4,1,3],[3,1,5,0,4,2]
+  ];
+  const pattern = patterns[(state.round-1) % patterns.length];
+  for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) {
+    const bType = BRICK_COLORS[pattern[r%pattern.length] % BRICK_COLORS.length];
+    state.bricks.push({
+      x: BRICK_GAP + c*(BRICK_W+BRICK_GAP),
+      y: BRICK_ROWS_START + r*(BRICK_H+BRICK_GAP),
+      w: BRICK_W, h: BRICK_H,
+      hp: bType.hp, maxHp: bType.hp,
+      color: bType.color, score: bType.score
+    });
+  }
+}
+
+// ===================== ÇİZİM =====================
+function draw() {
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#0d0d2b';
+  ctx.fillRect(0,0,W,H);
+  drawGrid();
+
+  // Tuğlalar
+  state.bricks.forEach(b => {
+    if (b.hp<=0) return;
+    ctx.globalAlpha = b.hp < b.maxHp ? 0.55 : 1;
+    ctx.fillStyle = b.color;
+    ctx.fillRect(b.x,b.y,b.w,b.h);
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillRect(b.x,b.y,b.w,3);
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(b.x+0.5,b.y+0.5,b.w-1,b.h-1);
+  });
+
+  // Power-up'lar
+  state.powerups.forEach(p => {
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.roundRect(p.x-15,p.y-9,30,18,4);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.floor(W*0.028)}px Courier New`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p.icon, p.x, p.y);
+  });
+
+  // Bariyer
+  if (state.barrier) {
+    const by = H - 4;
+    const grad = ctx.createLinearGradient(0,by,W,by);
+    grad.addColorStop(0,'#001133');
+    grad.addColorStop(0.3,'#4488ff');
+    grad.addColorStop(0.7,'#4488ff');
+    grad.addColorStop(1,'#001133');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, by, W, 5);
+    ctx.fillStyle = 'rgba(100,180,255,0.3)';
+    ctx.fillRect(0, by-2, W, 2);
+  }
+
+  // Lazerler
+  ctx.fillStyle = '#ff3366';
+  state.lasers.forEach(l => { ctx.fillRect(l.x-2,l.y,4,12); });
+
+  // Toplar
+  state.balls.forEach(ball => {
+    const ballColor = ball.fire ? 'rgba(255,120,0,0.85)' : 'rgba(255,220,100,0.8)';
+    const grad = ctx.createRadialGradient(ball.x,ball.y,0,ball.x,ball.y,ball.r*2);
+    grad.addColorStop(0, ballColor);
+    grad.addColorStop(1,'rgba(255,100,0,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r*2,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = ball.fire ? '#ff6600' : '#ffffcc';
+    ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2); ctx.fill();
+  });
+
+  // Mıknatıs göstergesi
+  if (state.activeEffects.magnet) {
+    state.balls.filter(b=>b.launched && b.magnetStick).forEach(ball=>{
+      ctx.strokeStyle = '#cc44ff';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3,3]);
+      ctx.beginPath();
+      ctx.moveTo(ball.x, ball.y);
+      ctx.lineTo(state.paddle.x, state.paddle.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    });
+  }
+
+  // Paddle
+  const pw = state.paddle.w;
+  const px = state.paddle.x - pw/2;
+  const py = state.paddle.y;
+  const ph = state.paddle.h;
+  const pColor = state.activeEffects.wide ? '#00ccff' :
+                 state.activeEffects.laser ? '#ff3366' :
+                 state.activeEffects.magnet ? '#cc44ff' :
+                 state.activeEffects.fire ? '#ff4400' : '#ff6600';
+  const pGrad = ctx.createLinearGradient(px,py,px,py+ph);
+  pGrad.addColorStop(0,'#ffffff');
+  pGrad.addColorStop(0.3,pColor);
+  pGrad.addColorStop(1,'#442200');
+  ctx.fillStyle = pGrad;
+  ctx.beginPath(); ctx.roundRect(px,py,pw,ph,4); ctx.fill();
+}
+
+function drawGrid() {
+  ctx.strokeStyle = 'rgba(30,30,80,0.5)';
+  ctx.lineWidth = 0.5;
+  const step = Math.floor(W/20);
+  for (let x=0; x<W; x+=step) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y=0; y<H; y+=step) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+}
+
+// ===================== OYUN DÖNGÜSÜ =====================
+function gameLoop() {
+  if (!gameRunning || paused) return;
+  update(); draw();
+  animId = requestAnimationFrame(gameLoop);
+}
+
+function update() {
+  const p = state.paddle;
+
+  state.balls.forEach((ball, bi) => {
+    if (!ball.launched) { ball.x = p.x; return; }
+
+    // Mıknatıs yapışma
+    if (ball.magnetStick) return;
+
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+
+    // Duvar
+    if (ball.x-ball.r < 0) { ball.x=ball.r; ball.vx=Math.abs(ball.vx); SFX.wall(); }
+    if (ball.x+ball.r > W) { ball.x=W-ball.r; ball.vx=-Math.abs(ball.vx); SFX.wall(); }
+    if (ball.y-ball.r < 0) { ball.y=ball.r; ball.vy=Math.abs(ball.vy); SFX.wall(); }
+
+    // Bariyer (alt)
+    const barrierY = H - 4;
+    if (state.barrier && ball.vy > 0 && ball.y+ball.r > barrierY && ball.y+ball.r < barrierY+10) {
+      ball.vy = -Math.abs(ball.vy);
+      ball.y = barrierY - ball.r;
+      SFX.barrier();
+    }
+
+    // Paddle çarpışma
+    if (ball.vy > 0 &&
+        ball.x > p.x-p.w/2-ball.r && ball.x < p.x+p.w/2+ball.r &&
+        ball.y+ball.r > p.y && ball.y+ball.r < p.y+p.h+8) {
+
+      if (state.activeEffects.magnet) {
+        ball.magnetStick = true;
+        ball.vx = 0; ball.vy = 0;
+        ball.x = Math.max(p.x-p.w/2+ball.r, Math.min(p.x+p.w/2-ball.r, ball.x));
+        ball.y = p.y - ball.r;
+        SFX.magnet();
+      } else {
+        const hit = (ball.x - p.x) / (p.w/2);
+        const angle = hit * 65 * Math.PI/180;
+        const speed = Math.sqrt(ball.vx**2 + ball.vy**2);
+        ball.vx = Math.sin(angle)*speed;
+        ball.vy = -Math.abs(Math.cos(angle)*speed);
+        ball.y = p.y - ball.r;
+        SFX.paddle();
+      }
+    }
+
+    // Mıknatıs topunu paddle ile tut
+    if (ball.magnetStick) {
+      ball.x = Math.max(p.x-p.w/2+ball.r, Math.min(p.x+p.w/2-ball.r, ball.x));
+      ball.y = p.y - ball.r;
+    }
+
+    // Alt düşme
+    if (ball.y-ball.r > H) { state.balls.splice(bi,1); return; }
+
+    // Tuğla çarpışma
+    for (let i=0; i<state.bricks.length; i++) {
+      const b = state.bricks[i];
+      if (b.hp<=0) continue;
+      if (ball.x+ball.r>b.x && ball.x-ball.r<b.x+b.w &&
+          ball.y+ball.r>b.y && ball.y-ball.r<b.y+b.h) {
+
+        if (!ball.fire) {
+          const oL=(ball.x+ball.r)-b.x, oR=(b.x+b.w)-(ball.x-ball.r);
+          const oT=(ball.y+ball.r)-b.y, oB=(b.y+b.h)-(ball.y-ball.r);
+          if (Math.min(oL,oR) < Math.min(oT,oB)) ball.vx*=-1; else ball.vy*=-1;
+        }
+
+        b.hp--;
+        if (b.hp<=0) {
+          state.score += b.score;
+          bricksDestroyed++;
+          scoreDisplay.textContent = state.score;
+          SFX.brick();
+          if (Math.random()<0.2) spawnPowerup(b.x+b.w/2, b.y+b.h/2);
+        } else { SFX.brickHard(); }
+
+        if (ball.fire) break; // ateş topu devam eder
+      }
+    }
+  });
+
+  // Top yok → can düş
+  if (state.balls.length === 0) {
+    state.lives--;
+    updateLives();
+    if (state.lives<=0) {
+      SFX.gameover();
+      endGame(false); return;
+    }
+    SFX.die();
+    clearEffects();
+    spawnBall();
+  }
+
+  // Tüm tuğlalar bitti
+  if (state.bricks.every(b=>b.hp<=0)) {
+    state.round++;
+    roundDisplay.textContent = state.round;
+    clearEffects();
+    state.balls=[]; state.powerups=[]; state.lasers=[];
+    buildBricks(); spawnBall();
+    SFX.round();
+    showRoundMsg();
+  }
+
+  // Power-up hareketi
+  for (let i=state.powerups.length-1; i>=0; i--) {
+    const pu = state.powerups[i];
+    pu.y += 1.8;
+    if (pu.y > H) { state.powerups.splice(i,1); continue; }
+    const pad = state.paddle;
+    if (pu.x>pad.x-pad.w/2 && pu.x<pad.x+pad.w/2 && pu.y>pad.y && pu.y<pad.y+pad.h) {
+      applyPowerup(pu.type);
+      state.powerups.splice(i,1);
+    }
+  }
+
+  // Lazer üret
+  if (state.activeEffects.laser) {
+    laserTimer++;
+    if (laserTimer%20===0) {
+      const pad = state.paddle;
+      state.lasers.push({x:pad.x-pad.w/4, y:pad.y});
+      state.lasers.push({x:pad.x+pad.w/4, y:pad.y});
+      SFX.laser();
+    }
+  }
+
+  // Lazer hareketi
+  for (let li=state.lasers.length-1; li>=0; li--) {
+    const l = state.lasers[li];
+    l.y -= 7;
+    if (l.y<0) { state.lasers.splice(li,1); continue; }
+    for (let bi=0; bi<state.bricks.length; bi++) {
+      const b = state.bricks[bi];
+      if (b.hp<=0) continue;
+      if (l.x>b.x && l.x<b.x+b.w && l.y>b.y && l.y<b.y+b.h) {
+        b.hp--;
+        if (b.hp<=0) { state.score+=b.score; bricksDestroyed++; scoreDisplay.textContent=state.score; SFX.brick(); }
+        state.lasers.splice(li,1); break;
+      }
+    }
+  }
+}
+
+// ===================== POWER-UP UYGULA =====================
+function spawnPowerup(x, y) {
+  const t = POWERUP_TYPES[Math.floor(Math.random()*POWERUP_TYPES.length)];
+  state.powerups.push({x, y, type:t.type, color:t.color, icon:t.icon});
+}
+
+function setEffect(key, duration, onExpire) {
+  state.activeEffects[key] = true;
+  clearTimeout(state.effectTimers[key]);
+  state.effectTimers[key] = setTimeout(() => {
+    state.activeEffects[key] = false;
+    if (onExpire) onExpire();
+    activePower.textContent = '—';
+  }, duration);
+}
+
+function applyPowerup(type) {
+  activePower.textContent = POWER_LABELS[type] || type;
+  SFX.powerup();
+
+  if (type==='wide') {
+    state.paddle.w = W*0.28;
+    setEffect('wide', 10000, ()=>{ state.paddle.w=W*0.18; });
+
+  } else if (type==='laser') {
+    setEffect('laser', 8000, ()=>{ state.lasers=[]; });
+
+  } else if (type==='multi') {
+    const existing=[...state.balls];
+    existing.forEach(b=>spawnBall(b));
+
+  } else if (type==='slow') {
+    state.balls.forEach(b=>{ if(b.launched){b.vx*=0.65;b.vy*=0.65;} });
+    setEffect('slow', 7000, ()=>{
+      state.balls.forEach(b=>{ if(b.launched){b.vx*=1.55;b.vy*=1.55;} });
+    });
+
+  } else if (type==='life') {
+    state.lives = Math.min(state.lives+1, 5);
+    updateLives();
+
+  } else if (type==='barrier') {
+    state.barrier = true;
+    clearTimeout(state.barrierTimer);
+    state.barrierTimer = setTimeout(()=>{ state.barrier=false; }, 12000);
+
+  } else if (type==='fire') {
+    state.balls.forEach(b=>b.fire=true);
+    setEffect('fire', 8000, ()=>{ state.balls.forEach(b=>b.fire=false); });
+
+  } else if (type==='magnet') {
+    setEffect('magnet', 8000, ()=>{
+      state.balls.forEach(b=>{
+        if (b.magnetStick) {
+          b.magnetStick = false;
+          const speed = baseSpeed();
+          b.vx = 0; b.vy = -speed;
+        }
+      });
+    });
+
+  } else if (type==='bomb') {
+    SFX.bomb();
+    // En yakın tuğlalara bomba
+    const alive = state.bricks.filter(b=>b.hp>0);
+    if (alive.length===0) return;
+    const cx = state.paddle.x;
+    const cy = state.paddle.y;
+    alive.sort((a,b)=>{
+      const da=Math.hypot(a.x+a.w/2-cx, a.y+a.h/2-cy);
+      const db=Math.hypot(b.x+b.w/2-cx, b.y+b.h/2-cy);
+      return da-db;
+    });
+    alive.slice(0,9).forEach(b=>{
+      b.hp=0;
+      state.score+=b.score;
+      bricksDestroyed++;
+    });
+    scoreDisplay.textContent = state.score;
+  }
+}
+
+function clearEffects() {
+  Object.keys(state.effectTimers||{}).forEach(k=>clearTimeout(state.effectTimers[k]));
+  clearTimeout(state.barrierTimer);
+  state.activeEffects = {};
+  state.effectTimers = {};
+  state.barrier = false;
+  state.paddle.w = W*0.18;
+  state.balls.forEach(b=>{ b.fire=false; b.magnetStick=false; });
+  activePower.textContent = '—';
+  laserTimer = 0;
+}
+
+// ===================== KONTROLLER =====================
+canvas.addEventListener('mousemove', e=>{
+  const rect=canvas.getBoundingClientRect();
+  movePaddle(e.clientX-rect.left);
+});
+canvas.addEventListener('touchmove', e=>{
+  e.preventDefault();
+  const rect=canvas.getBoundingClientRect();
+  movePaddle(e.touches[0].clientX-rect.left);
+},{passive:false});
+canvas.addEventListener('touchstart', e=>{ e.preventDefault(); launchBall(); },{passive:false});
+canvas.addEventListener('click', launchBall);
+
+function movePaddle(x) {
+  const hw=state.paddle.w/2;
+  state.paddle.x = Math.max(hw, Math.min(W-hw, x));
+  // Mıknatıs toplarını paddle ile taşı
+  state.balls.forEach(b=>{
+    if (b.magnetStick) {
+      b.x = Math.max(state.paddle.x-hw+b.r, Math.min(state.paddle.x+hw-b.r, b.x));
+      b.y = state.paddle.y - b.r;
+    }
+  });
+}
+
+function launchBall() {
+  if (paused || !gameRunning) return;
+  let launched = false;
+  state.balls.forEach(b=>{
+    if (!b.launched) {
+      const speed = baseSpeed();
+      b.vx=0; b.vy=-speed; b.launched=true; launched=true;
+    } else if (b.magnetStick) {
+      b.magnetStick=false;
+      const speed=baseSpeed();
+      b.vx=0; b.vy=-speed; launched=true;
+    }
+  });
+}
+
+// ===================== DURAKLAT =====================
+function togglePause() {
+  if (!gameRunning) return;
+  paused = !paused;
+  pauseBtn.textContent = paused ? '▶' : '⏸';
+  if (paused) {
+    cancelAnimationFrame(animId);
+    if (settings.music) stopMusic();
+    document.getElementById('pause-score').textContent = state.score;
+    document.getElementById('pause-round').textContent = state.round;
+    showPage('page-pause');
+  } else {
+    overlay.style.display = 'none';
+    if (settings.music) startMusic();
+    gameLoop();
+  }
+}
+
+// ===================== OYUN BAŞLAT/BİTİR =====================
+function startGame() {
+  overlay.style.display = 'none';
+  cancelAnimationFrame(animId);
+  paused = false;
+  pauseBtn.style.display = 'inline-block';
+  pauseBtn.textContent = '⏸';
+  initState();
+  updateLives();
+  roundDisplay.textContent = 1;
+  scoreDisplay.textContent = 0;
+  sessionStart = Date.now();
+  stats.plays++;
+  saveStats();
+  gameRunning = true;
+  if (settings.music) startMusic();
+  gameLoop();
+}
+
+function endGame(win) {
+  gameRunning = false;
+  paused = false;
+  cancelAnimationFrame(animId);
+  stopMusic();
+  pauseBtn.style.display = 'none';
+
+  // İstatistikleri güncelle
+  const elapsed = Math.floor((Date.now()-sessionStart)/1000);
+  stats.totalTime += elapsed;
+  stats.totalBricks += bricksDestroyed;
+  if (state.score > stats.bestScore) stats.bestScore = state.score;
+  if (state.round > stats.bestRound) stats.bestRound = state.round;
+  saveStats();
+
+  document.getElementById('end-title').textContent = win ? '🎉 TEBRİKLER!' : '💀 GAME OVER';
+  document.getElementById('end-sub').textContent = win ? 'Tüm roundları geçtin!' : 'Canların bitti!';
+  document.getElementById('end-score').textContent = state.score;
+  document.getElementById('end-round').textContent = state.round;
+  document.getElementById('end-best').textContent = stats.bestScore;
+  showPage('page-end');
+}
+
+function updateLives() {
+  livesIcons.innerHTML='';
+  for (let i=0;i<state.lives;i++) {
+    const s=document.createElement('span');
+    s.className='heart'; s.textContent='♥';
+    livesIcons.appendChild(s);
+  }
+}
+
+function showRoundMsg() {
+  const msg=document.createElement('div');
+  msg.style.cssText=`position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    color:#ffcc00;font-size:1.8em;font-weight:bold;font-family:Courier New;
+    text-shadow:0 0 20px #ffcc00;pointer-events:none;z-index:10;letter-spacing:3px;`;
+  msg.textContent=`ROUND ${state.round}`;
+  document.getElementById('canvas-wrapper').appendChild(msg);
+  setTimeout(()=>msg.remove(),1500);
+}
+
+// ===================== BAŞLANGIÇ =====================
+loadStats();
+loadSettings();
+showPage('page-main');
+
+window.addEventListener('resize',()=>{
+  const s=calcSize();
+  if (Math.abs(s.w-W)>20) location.reload();
+});
+</script>
+</body>
+</html>
