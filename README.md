@@ -72,7 +72,7 @@ Hiçbir harici kütüphane veya framework kullanılmamıştır. Tek `.html` dosy
 Herhangi bir kurulum gerekmez. Dosyayı indirip tarayıcıda aç:
 
 ```bash
-git clone https://github.com/KULLANICIADIN/arkanoid.git
+git clone https://github.com/kurtayfun/arkanoid.git
 cd arkanoid
 # index.html dosyasını tarayıcıda aç
 ```
